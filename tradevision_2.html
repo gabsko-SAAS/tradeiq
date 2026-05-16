@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeIQ — Journal de Trading IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a08;
+    --bg2: #111110;
+    --bg3: #191917;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0ede6;
+    --muted: #888880;
+    --accent: #c8f04a;
+    --accent2: #a8d03a;
+    --accent-dim: rgba(200,240,74,0.1);
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* GRID BG */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* NAV */
+  nav {
+    position: relative;
+    z-index: 10;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  nav .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(200,240,74,0.25);
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.08em;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 100px 0 80px;
+    text-align: center;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(200,240,74,0.3);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 32px;
+    font-family: var(--font-mono);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 8vw, 80px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 48px;
+    line-height: 1.75;
+    font-family: var(--font-mono);
+    font-weight: 300;
+  }
+
+  /* CTA BUTTON */
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #0a0a08;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 16px 36px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .cta-btn:hover { transform: translateY(-2px); background: #d8ff5a; }
+  .cta-btn:hover::before { opacity: 0.08; }
+  .cta-btn:active { transform: translateY(0); }
+  .arrow { font-size: 18px; transition: transform 0.18s; }
+  .cta-btn:hover .arrow { transform: translateX(4px); }
+
+  /* STAT STRIP */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 48px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 100px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat .num {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .stat .label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* HOW IT WORKS */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .section-heading {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 60px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 120px;
+  }
+  .step {
+    background: var(--bg2);
+    padding: 36px 28px;
+    transition: background 0.2s;
+  }
+  .step:hover { background: var(--bg3); }
+  .step-num {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: block;
+  }
+  .step-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .step h3 {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+  }
+  .step p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* FEATURES */
+  .features {
+    margin-bottom: 120px;
+  }
+  .feat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .feat {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .feat:hover { border-color: var(--border2); }
+  .feat .icon {
+    font-size: 22px;
+    margin-bottom: 14px;
+    display: block;
+  }
+  .feat h4 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .feat p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+  .feat.accent-feat {
+    background: var(--accent-dim);
+    border-color: rgba(200,240,74,0.2);
+    grid-column: span 2;
+  }
+  .feat.accent-feat h4 { color: var(--accent); }
+
+  /* TERMINAL MOCKUP */
+  .terminal {
+    background: #0d0d0b;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 120px;
+  }
+  .term-bar {
+    background: var(--bg3);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+  .term-title { font-size: 12px; color: var(--muted); margin-left: 8px; }
+  .term-body { padding: 24px 28px; }
+  .term-line { font-family: var(--font-mono); font-size: 13px; line-height: 2; }
+  .term-line .prompt { color: var(--accent); }
+  .term-line .cmd { color: var(--text); }
+  .term-line .out { color: var(--muted); padding-left: 20px; font-weight: 300; }
+  .term-line .warn { color: #e8914a; }
+  .term-line .ok { color: var(--accent); }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1.1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* CTA SECTION */
+  .cta-section {
+    text-align: center;
+    padding: 80px 0 100px;
+    border-top: 1px solid var(--border);
+  }
+  .cta-section h2 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 6vw, 52px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .cta-section p {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0;
+    text-align: center;
+  }
+  footer p {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    padding: 24px;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 40px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    transform: translateY(12px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal .check {
+    width: 52px;
+    height: 52px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,240,74,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 22px;
+  }
+  .modal h3 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .modal p {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+  .modal input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+  }
+  .modal input:focus { border-color: rgba(200,240,74,0.5); }
+  .modal input::placeholder { color: var(--muted); }
+  .modal-cta {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a08;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .modal-cta:hover { background: #d8ff5a; }
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+  }
+  .modal { position: relative; }
+
+  /* SUCCESS STATE */
+  .success-msg {
+    display: none;
+    text-align: center;
+  }
+  .success-msg .big { font-size: 40px; margin-bottom: 12px; }
+  .success-msg h3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .success-msg p { color: var(--muted); font-size: 14px; font-weight: 300; }
+
+  @media (max-width: 600px) {
+    .steps { grid-template-columns: 1fr; }
+    .feat-grid { grid-template-columns: 1fr; }
+    .feat.accent-feat { grid-column: span 1; }
+    .stats { gap: 28px; }
+    .hero { padding: 60px 0 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="wrap">
+    <a href="#" class="logo">Trade<span>IQ</span></a>
+    <span class="badge">BÊTA · BIENTÔT</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <span class="tag">journal ia · analyse automatique</span>
+    <h1>Arrête de perdre<br>pour les <em>mêmes erreurs.</em></h1>
+    <p>Colle ton historique de trades. L'IA analyse tes patterns, identifie tes erreurs récurrentes et génère un rapport complet en 30 secondes.</p>
+    <button class="cta-btn" onclick="openModal()">
+      Rejoindre la file d'attente <span class="arrow">→</span>
+    </button>
+  </div>
+</section>
+
+<!-- STATS -->
+<section>
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <span class="num">30s</span>
+        <span class="label">Pour générer le rapport</span>
+      </div>
+      <div class="stat">
+        <span class="num">100%</span>
+        <span class="label">Automatisé par IA</span>
+      </div>
+      <div class="stat">
+        <span class="num">0</span>
+        <span class="label">Saisie manuelle</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="wrap">
+    <p class="section-title">Comment ça marche</p>
+    <h2 class="section-heading">3 étapes,<br>zéro friction.</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01 —</span>
+        <span class="step-icon">📋</span>
+        <h3>Colle ton historique</h3>
+        <p>Export CSV depuis ta plateforme (Binance, MetaTrader, Interactive Brokers…). Glisse-dépose, c'est tout.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02 —</span>
+        <span class="step-icon">🧠</span>
+        <h3>L'IA analyse</h3>
+        <p>Notre modèle scanne chaque trade, détecte tes patterns gagnants et perdants, et identifie tes biais comportementaux.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03 —</span>
+        <span class="step-icon">📊</span>
+        <h3>Ton rapport en 30s</h3>
+        <p>Un rapport clair avec tes erreurs récurrentes, tes meilleurs setups, et des recommandations concrètes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TERMINAL MOCKUP -->
+<section>
+  <div class="wrap">
+    <p class="section-title">Aperçu du rapport</p>
+    <h2 class="section-heading">Ce que l'IA<br>va te dire.</h2>
+    <div class="terminal">
+      <div class="term-bar">
+        <div class="dot r"></div>
+        <div class="dot y"></div>
+        <div class="dot g"></div>
+        <span class="term-title">tradeiq_report_juin2025.txt</span>
+      </div>
+      <div class="term-body">
+        <div class="term-line"><span class="prompt">▶</span> <span class="cmd">analyse_complete.run()</span></div>
+        <div class="term-line"><span class="out">Chargement de 247 trades...</span></div>
+        <div class="term-line"><span class="out ok">✓ Analyse terminée en 28 secondes</span></div>
+        <br>
+        <div class="term-line"><span class="prompt">!</span> <span class="warn">ERREUR RÉCURRENTE #1 — FOMO</span></div>
+        <div class="term-line"><span class="out">Tu entres 3x plus tôt le lundi matin. Win rate: 31%</span></div>
+        <div class="term-line"><span class="out">→ Attends la bougie de 9h30 avant d'entrer.</span></div>
+        <br>
+        <div class="term-line"><span class="prompt">!</span> <span class="warn">ERREUR RÉCURRENTE #2 — OVER-TRADING</span></div>
+        <div class="term-line"><span class="out">Après une perte, tu places 2.3x plus de trades. Win rate: 24%</span></div>
+        <div class="term-line"><span class="out">→ Règle: max 2 trades après un stop loss.</span></div>
+        <br>
+        <div class="term-line"><span class="prompt">✓</span> <span class="ok">TON MEILLEUR SETUP: Break + retest entre 14h-16h</span></div>
+        <div class="term-line"><span class="out">Win rate: 68% · RR moyen: 2.4 · 43 occurrences</span></div>
+        <div class="term-line"><span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="wrap">
+    <p class="section-title">Fonctionnalités</p>
+    <h2 class="section-heading">Tout ce dont<br>tu as besoin.</h2>
+    <div class="feat-grid">
+      <div class="feat accent-feat">
+        <span class="icon">⚡</span>
+        <h4>Analyse IA en 30 secondes</h4>
+        <p>Pas de dashboard à configurer. Pas de tags à ajouter manuellement. Tu colles ton export, l'IA fait le travail. Le rapport arrive en moins d'une minute.</p>
+      </div>
+      <div class="feat">
+        <span class="icon">🎯</span>
+        <h4>Détection des biais</h4>
+        <p>FOMO, revenge trading, overtrading, taille de position… L'IA détecte les patterns comportementaux que tu ne vois pas toi-même.</p>
+      </div>
+      <div class="feat">
+        <span class="icon">📈</span>
+        <h4>Setups gagnants identifiés</h4>
+        <p>Quels setups te rapportent vraiment ? À quelle heure ? Sur quel actif ? L'IA te donne les chiffres bruts sans filtre.</p>
+      </div>
+      <div class="feat">
+        <span class="icon">🔗</span>
+        <h4>Toutes plateformes</h4>
+        <p>Compatible avec les exports CSV de Binance, Bybit, MetaTrader, TradingView, Interactive Brokers, et plus encore.</p>
+      </div>
+      <div class="feat">
+        <span class="icon">🔒</span>
+        <h4>100% privé</h4>
+        <p>Tes données ne sont jamais stockées. Chaque analyse est traitée à la volée et effacée immédiatement après.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <div class="wrap">
+    <h2>Prêt à stopper<br>les mêmes erreurs ?</h2>
+    <p>Accès immédiat à ton rapport IA. Résilie quand tu veux.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:center;">
+      <button class="cta-btn" onclick="window.open('https://buy.stripe.com/test_eVq9AVfdp8oN1573UV5Vu00','_blank')" style="font-size:16px;padding:18px 40px;">
+        Commencer — 35$/mois <span class="arrow">→</span>
+      </button>
+      <button onclick="openModal()" style="background:none;border:1px solid rgba(255,255,255,0.2);color:var(--muted);font-family:var(--font-mono);font-size:13px;padding:18px 28px;border-radius:6px;cursor:pointer;">
+        Rejoindre la file d'attente
+      </button>
+    </div>
+    <p style="margin-top:16px;font-size:12px;color:var(--muted);">✓ Sans engagement · ✓ Rapport en 24h · ✓ Toutes plateformes</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <p>© 2025 TradeIQ · Fait avec obsession pour les traders intraday</p>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="form-state">
+      <div class="check">⚡</div>
+      <h3>File d'attente</h3>
+      <p>Entre ton email pour être notifié en priorité dès l'ouverture des accès bêta.</p>
+      <input type="email" id="email-input" placeholder="ton@email.com" />
+      <button class="modal-cta" onclick="submitEmail()">Je veux un accès bêta →</button>
+    </div>
+    <div class="success-msg" id="success-state">
+      <div class="big">🎯</div>
+      <h3>Tu es dans la liste !</h3>
+      <p>On te contacte dès l'ouverture de la bêta. En attendant, travaille tes setups.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    window.open('https://tally.so/r/kdJAk6', '_blank');
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+  function submitEmail() {
+    const val = document.getElementById('email-input').value.trim();
+    if (!val || !val.includes('@')) {
+      document.getElementById('email-input').style.borderColor = 'rgba(232,80,80,0.6)';
+      return;
+    }
+    document.getElementById('form-state').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+</body>
+</html>
